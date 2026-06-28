@@ -62,17 +62,7 @@ async def start_client() -> None:
     await client.connect()
 
     if not await client.is_user_authorized():
-        logger.info("🔐 צריך להתחבר – שולח קוד ל-%s", PHONE)
-        await client.send_code_request(PHONE)
-        code = input("📲 הכנס את קוד ה-SMS שקיבלת: ").strip()
-        try:
-            await client.sign_in(PHONE, code)
-        except Exception as e:
-            if "two-steps" in str(e).lower() or "password" in str(e).lower():
-                password = input("🔑 הכנס את סיסמת ה-2FA: ").strip()
-                await client.sign_in(password=password)
-            else:
-                raise
+        pass
         logger.info("✅ התחברות הצליחה – session נשמר ב-%s.session", SESSION)
     else:
         logger.info("✅ Client מחובר (session קיים)")
