@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+
+  # ── Backend: FastAPI + Telethon ──────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: streamil-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./session:/app/session   # שמירת קובץ ה-session בין הפעלות
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  # ── Frontend: Nginx שמגיש את index.html ──────
+  frontend:
+    image: nginx:alpine
+    container_name: streamil-frontend
+    ports:
+      - "3000:80"
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    restart: unless-stopped

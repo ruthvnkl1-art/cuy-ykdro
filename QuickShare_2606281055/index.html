@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StreamIL – סטרימינג עברי</title>
+  <style>
+    /* ── Tokens ──────────────────────────────── */
+    :root {
+      --bg:        #0a0a0f;
+      --surface:   #13131a;
+      --card:      #1c1c26;
+      --border:    #2a2a38;
+      --accent:    #e6c84a;
+      --accent2:   #7b5ea7;
+      --text:      #e8e8f0;
+      --muted:     #7a7a9a;
+      --danger:    #e05c5c;
+      --radius:    10px;
+      --font:      'Segoe UI', Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+    }
+
+    /* ── Header ──────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 40px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, transparent 100%);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+    }
+
+    .logo {
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      color: var(--accent);
+    }
+    .logo span { color: var(--text); }
+
+    .status-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      background: #4caf50;
+      display: inline-block;
+      margin-left: 8px;
+      box-shadow: 0 0 8px #4caf5088;
+    }
+    .status-dot.offline { background: var(--danger); box-shadow: none; }
+
+    /* ── Search Section ──────────────────────── */
+    .hero {
+      padding: 60px 40px 30px;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .hero p {
+      color: var(--muted);
+      margin-bottom: 32px;
+      font-size: 1rem;
+    }
+
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      max-width: 580px;
+      margin: 0 auto;
+    }
+
+    .search-bar input {
+      flex: 1;
+      padding: 14px 20px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 1rem;
+      font-family: var(--font);
+      outline: none;
+      transition: border-color 0.2s;
+      direction: rtl;
+    }
+
+    .search-bar input:focus { border-color: var(--accent); }
+
+    .search-bar input::placeholder { color: var(--muted); }
+
+    .btn {
+      padding: 14px 24px;
+      background: var(--accent);
+      color: #0a0a0f;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn:hover { opacity: 0.88; }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Results Grid ────────────────────────── */
+    .section {
+      padding: 0 40px 40px;
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+    }
+
+    .movie-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .movie-card::before {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 3px; height: 100%;
+      background: var(--accent2);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .movie-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+
+    .movie-card:hover::before { opacity: 1; }
+
+    .card-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      line-height: 1.4;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .badge {
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .badge-heb  { background: #7b5ea722; color: #b89fe0; border: 1px solid #7b5ea744; }
+    .badge-size { background: #1e2a1e; color: #6fcf6f; border: 1px solid #2d4a2d; }
+    .badge-ch   { background: #1e1e2e; color: var(--muted); border: 1px solid var(--border); }
+
+    .play-btn {
+      width: 100%;
+      padding: 10px;
+      background: var(--accent);
+      color: #0a0a0f;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: opacity 0.15s;
+    }
+
+    .play-btn:hover { opacity: 0.85; }
+
+    /* ── Player Modal ────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      width: 100%;
+      max-width: 900px;
+      overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.8);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      max-width: 80%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 1.4rem;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: color 0.15s;
+    }
+
+    .close-btn:hover { color: var(--text); }
+
+    video {
+      width: 100%;
+      display: block;
+      background: #000;
+      max-height: 70vh;
+    }
+
+    /* ── States ──────────────────────────────── */
+    .state-box {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+
+    .state-box .icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .state-box p { font-size: 0.95rem; }
+
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 14px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-msg {
+      background: #2a1a1a;
+      border: 1px solid #4a2a2a;
+      color: #f09090;
+      padding: 12px 18px;
+      border-radius: var(--radius);
+      margin: 0 40px 24px;
+      font-size: 0.9rem;
+    }
+
+    /* ── Responsive ──────────────────────────── */
+    @media (max-width: 600px) {
+      header { padding: 14px 20px; }
+      .hero { padding: 40px 20px 24px; }
+      .section { padding: 0 20px 32px; }
+      .results-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ────────────────────────────────── -->
+<header>
+  <div class="logo">Stream<span>IL</span></div>
+  <div style="display:flex; align-items:center; font-size:0.82rem; color:var(--muted);">
+    <span class="status-dot" id="statusDot"></span>
+    <span id="statusText">מתחבר…</span>
+  </div>
+</header>
+
+<!-- ── Hero / Search ──────────────────────────── -->
+<section class="hero">
+  <h1>מצא סרט לצפייה</h1>
+  <p>חיפוש ישיר בערוצי טלגרם – סטרימינג ללא הורדה</p>
+  <div class="search-bar">
+    <input
+      type="text"
+      id="searchInput"
+      placeholder="שם סרט, שחקן, שנה…"
+      autocomplete="off"
+    />
+    <button class="btn" id="searchBtn" onclick="doSearch()">חפש</button>
+  </div>
+</section>
+
+<!-- ── Error Banner ───────────────────────────── -->
+<div class="error-msg" id="errorMsg" style="display:none;"></div>
+
+<!-- ── Results ────────────────────────────────── -->
+<section class="section" id="resultsSection" style="display:none;">
+  <div class="section-title" id="resultsLabel"></div>
+  <div class="results-grid" id="resultsGrid"></div>
+</section>
+
+<!-- ── Empty / Loading States ────────────────── -->
+<div class="state-box" id="loadingState" style="display:none;">
+  <div class="spinner"></div>
+  <p>מחפש בערוצים…</p>
+</div>
+
+<div class="state-box" id="emptyState" style="display:none;">
+  <div class="icon">🎬</div>
+  <p>לא נמצאו תוצאות. נסה שם אחר.</p>
+</div>
+
+<!-- ── Player Modal ───────────────────────────── -->
+<div class="modal-overlay" id="playerModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="playerTitle">טוען…</span>
+      <button class="close-btn" onclick="closePlayer()">✕</button>
+    </div>
+    <video
+      id="videoPlayer"
+      controls
+      autoplay
+      preload="metadata"
+    ></video>
+  </div>
+</div>
+
+<script>
+  // ── Config ────────────────────────────────────
+  const API_BASE = "http://localhost:8000"; // שנה אם השרת על פורט/כתובת אחרת
+
+  // ── Health Check ──────────────────────────────
+  async function checkHealth() {
+    const dot  = document.getElementById("statusDot");
+    const text = document.getElementById("statusText");
+    try {
+      const res  = await fetch(`${API_BASE}/health`);
+      const data = await res.json();
+      if (data.telegram_connected) {
+        dot.className  = "status-dot";
+        text.textContent = "מחובר לטלגרם";
+      } else {
+        dot.className  = "status-dot offline";
+        text.textContent = "טלגרם מנותק";
+      }
+    } catch {
+      dot.className  = "status-dot offline";
+      text.textContent = "השרת לא פעיל";
+    }
+  }
+
+  // ── Search ────────────────────────────────────
+  async function doSearch() {
+    const query = document.getElementById("searchInput").value.trim();
+    if (!query) return;
+
+    setError(null);
+    showState("loading");
+    document.getElementById("resultsSection").style.display = "none";
+
+    try {
+      const res  = await fetch(`${API_BASE}/search?query=${encodeURIComponent(query)}&limit=30`);
+      if (!res.ok) throw new Error(`שגיאת שרת ${res.status}`);
+      const data = await res.json();
+
+      if (!data.results || data.results.length === 0) {
+        showState("empty");
+        return;
+      }
+
+      showState(null);
+      renderResults(data.results, query);
+
+    } catch (e) {
+      showState(null);
+      setError(`שגיאה בחיפוש: ${e.message}`);
+    }
+  }
+
+  // ── Render Cards ──────────────────────────────
+  function renderResults(results, query) {
+    const section = document.getElementById("resultsSection");
+    const label   = document.getElementById("resultsLabel");
+    const grid    = document.getElementById("resultsGrid");
+
+    label.textContent = `${results.length} תוצאות עבור "${query}"`;
+    grid.innerHTML = "";
+
+    results.forEach(movie => {
+      const isHeb = /hebsub|תרגום|עברית|hebrew/i.test(movie.filename);
+      const card  = document.createElement("div");
+      card.className = "movie-card";
+      card.innerHTML = `
+        <div class="card-title">${escHtml(movie.filename)}</div>
+        <div class="card-meta">
+          ${isHeb ? '<span class="badge badge-heb">🇮🇱 עברית</span>' : ""}
+          <span class="badge badge-size">💾 ${movie.size_mb} MB</span>
+          <span class="badge badge-ch">📡 ${escHtml(movie.channel)}</span>
+        </div>
+        <button class="play-btn" onclick="playMovie('${movie.stream_url}', \`${escHtml(movie.filename)}\`)">
+          ▶ הפעל
+        </button>
+      `;
+      grid.appendChild(card);
+    });
+
+    section.style.display = "block";
+  }
+
+  // ── Player ────────────────────────────────────
+  function playMovie(streamUrl, title) {
+    const modal   = document.getElementById("playerModal");
+    const video   = document.getElementById("videoPlayer");
+    const ptitle  = document.getElementById("playerTitle");
+
+    ptitle.textContent = title;
+    video.src = `${API_BASE}${streamUrl}`;
+    modal.classList.add("open");
+    video.play().catch(() => {});
+  }
+
+  function closePlayer() {
+    const modal = document.getElementById("playerModal");
+    const video = document.getElementById("videoPlayer");
+    video.pause();
+    video.src = "";
+    modal.classList.remove("open");
+  }
+
+  // סגירה בלחיצה על הרקע
+  document.getElementById("playerModal").addEventListener("click", function(e) {
+    if (e.target === this) closePlayer();
+  });
+
+  // ── Helpers ───────────────────────────────────
+  function showState(state) {
+    document.getElementById("loadingState").style.display = state === "loading" ? "block" : "none";
+    document.getElementById("emptyState").style.display   = state === "empty"   ? "block" : "none";
+  }
+
+  function setError(msg) {
+    const el = document.getElementById("errorMsg");
+    if (msg) { el.textContent = msg; el.style.display = "block"; }
+    else      { el.style.display = "none"; }
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;")
+      .replace(/'/g,"&#39;");
+  }
+
+  // Enter בשדה החיפוש
+  document.getElementById("searchInput").addEventListener("keydown", e => {
+    if (e.key === "Enter") doSearch();
+  });
+
+  // ── Init ──────────────────────────────────────
+  checkHealth();
+  setInterval(checkHealth, 15000);
+</script>
+</body>
+</html>
