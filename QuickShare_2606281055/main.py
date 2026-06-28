@@ -61,19 +61,16 @@ async def start_client() -> None:
     client = TelegramClient(SESSION, API_ID, API_HASH)
     await client.connect()
 
-    if not await client.is_user_authorized():
-        pass
-        logger.info("✅ התחברות הצליחה – session נשמר ב-%s.session", SESSION)
+  if not await client.is_user_authorized():
+        logger.info("❌ שגיאה: קובץ הסשן לא מחובר לחשבון טלגרם!")
     else:
-        logger.info("✅ Client מחובר (session קיים)")
-
+        logger.info("✅ הבוט מחובר בהצלחה באמצעות קובץ הסשן!")
 
 async def stop_client() -> None:
     global client
     if client and client.is_connected():
         await client.disconnect()
-        logger.info("🔌 Client נותק")
-
+        logger.info("🔌 Client נתק")
 
 # ─────────────────────────────────────────────
 # Lifespan
